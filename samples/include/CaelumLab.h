@@ -1,6 +1,6 @@
 /*
 This file is part of Caelum.
-See http://www.ogre3d.org/wiki/index.php/Caelum 
+See http://www.ogre3d.org/wiki/index.php/Caelum
 
 Copyright (c) 2006-2008 Caelum team. See Contributors.txt for details.
 
@@ -21,7 +21,7 @@ along with Caelum. If not, see <http://www.gnu.org/licenses/>.
 #include "CaelumDemoCommon.h"
 
 #include "CEGUI/CEGUI.h"
-#include "OgreCEGUIRenderer.h"
+#include "CEGUI/RendererModules/Ogre/Renderer.h"
 #include "ExampleApplication.h"
 
 enum SampleMaterialScheme
@@ -41,8 +41,8 @@ private:
     std::auto_ptr<CaelumSystem> mCaelumSystem;
 
     // Reversing these two causes a crash.
-    std::auto_ptr<CEGUI::Renderer> mGuiRenderer;
-    std::auto_ptr<CEGUI::System> mGuiSystem;
+    // std::auto_ptr<CEGUI::Renderer> mGuiRenderer;
+    // std::auto_ptr<CEGUI::System> mGuiSystem;
     bool mShutdownRequested;
 
     void initCaelum ();
@@ -52,7 +52,7 @@ private:
     // Quick fetch a widget. Checks existence and type.
     // Throws on not found.
     template<class WidgetT> inline WidgetT* getWidget (const char* name) {
-        return static_cast<WidgetT*>(CEGUI::WindowManager::getSingleton ().getWindow (name));
+        return static_cast<WidgetT*>(CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild (name));
     }
     inline CEGUI::Window* getWindow (const char* name) {
         return getWidget<CEGUI::Window> (name);
@@ -73,7 +73,7 @@ private:
     inline bool leftMouseDown () { return mMouse->getMouseState ().buttonDown (OIS::MB_Left); }
 
     bool mLastMousePositionSet;
-    CEGUI::Point mLastMousePosition;
+    CEGUI::Vector2f mLastMousePosition;
 
     // CEGUI event handling.
 	bool handleMouseMove (const CEGUI::EventArgs& evt);
@@ -92,8 +92,8 @@ private:
 
     /** Update a scrolling tweaker.
      *  The value is only changed if the control is currently focused.
-     *  @returns if the value was changed. 
-     */ 
+     *  @returns if the value was changed.
+     */
     bool updateScrollbarTweak (
             const Ogre::String& editboxName,
             const Ogre::String& scrollbarName,
@@ -153,7 +153,7 @@ public:
     ~CaelumLabFrameListener ();
 
 private:
-    class ScriptingUI 
+    class ScriptingUI
     {
     public:
         ScriptingUI (CaelumLabFrameListener* parent);

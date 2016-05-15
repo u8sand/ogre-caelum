@@ -121,9 +121,9 @@ endif()
 # now add the directories
 add_subdirectory(main)
 
-#if(Caelum_BUILD_SAMPLES)
-#	add_subdirectory(samples)
-#endif(Caelum_BUILD_SAMPLES)
+if(Caelum_BUILD_SAMPLES)
+	add_subdirectory(samples)
+endif(Caelum_BUILD_SAMPLES)
 
 
 

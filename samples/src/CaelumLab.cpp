@@ -1,6 +1,6 @@
 /*
 This file is part of Caelum.
-See http://www.ogre3d.org/wiki/index.php/Caelum 
+See http://www.ogre3d.org/wiki/index.php/Caelum
 
 Copyright (c) 2008 Caelum team. See Contributors.txt for details.
 
@@ -144,31 +144,32 @@ void CaelumLabFrameListener::initCaelum ()
 void CaelumLabFrameListener::destroyCaelum ()
 {
 	mCaelumSystem.reset();
+  CEGUI::OgreRenderer::destroySystem();
 }
 
 void CaelumLabFrameListener::initGui () {
-    mGuiRenderer.reset(new CEGUI::OgreCEGUIRenderer (
-            mWindow, Ogre::RENDER_QUEUE_OVERLAY, false, 3000, mSceneMgr));
-    mGuiSystem.reset(new CEGUI::System (mGuiRenderer.get()));
+    // mGuiRenderer.reset(new CEGUI::OgreRenderer (
+    //         mWindow, Ogre::RENDER_QUEUE_OVERLAY, false, 3000, mSceneMgr));
+    // mGuiSystem.reset(new CEGUI::System (mGuiRenderer.get()));
+    CEGUI::OgreRenderer::bootstrapSystem();
 
     CEGUI::Logger::getSingleton ().setLoggingLevel (CEGUI::Informative);
 
     // load scheme and set up defaults
-    CEGUI::SchemeManager::getSingleton ().loadScheme((CEGUI::utf8*)"TaharezLookSkin.scheme");
-    mGuiSystem->setDefaultMouseCursor ((CEGUI::utf8*)"TaharezLook", (CEGUI::utf8*)"MouseArrow");
+    CEGUI::SchemeManager::getSingleton().createFromFile((CEGUI::utf8*)"TaharezLookSkin.scheme");
+    CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setDefaultImage ((CEGUI::utf8*)"TaharezLook/MouseArrow");
     // BlueHighway-10 does not rescale with resolution. This is desirable.
-    mGuiSystem->setDefaultFont ((CEGUI::utf8*)"BlueHighway-10");
+    CEGUI::System::getSingleton().getDefaultGUIContext().setDefaultFont ((CEGUI::utf8*)"BlueHighway-10");
 
-    CEGUI::WindowManager* wmgr = CEGUI::WindowManager::getSingletonPtr ();
-    CEGUI::Window* sheet = wmgr->loadWindowLayout (CEGUI::String("CaelumLab.layout")); 
-    mGuiSystem->setGUISheet (sheet);
+    CEGUI::Window* sheet = CEGUI::WindowManager::getSingleton().loadLayoutFromFile (CEGUI::String("CaelumLab.layout"));
+    CEGUI::System::getSingleton().getDefaultGUIContext().setRootWindow (sheet);
 
-    CEGUI::Window* wnd = CEGUI::WindowManager::getSingleton().getWindow("CaelumLab");
-    wnd->subscribeEvent(CEGUI::Window::EventMouseMove, 
+    CEGUI::Window* wnd = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("CaelumLab");
+    wnd->subscribeEvent(CEGUI::Window::EventMouseMove,
             CEGUI::Event::Subscriber(&CaelumLabFrameListener::handleMouseMove, this));
-    wnd->subscribeEvent(CEGUI::Window::EventMouseButtonUp, 
+    wnd->subscribeEvent(CEGUI::Window::EventMouseButtonUp,
             CEGUI::Event::Subscriber(&CaelumLabFrameListener::handleMouseUp, this));
-    wnd->subscribeEvent(CEGUI::Window::EventMouseButtonDown, 
+    wnd->subscribeEvent(CEGUI::Window::EventMouseButtonDown,
             CEGUI::Event::Subscriber(&CaelumLabFrameListener::handleMouseDown, this));
     (getWidget<CEGUI::Scrollbar> ("CaelumLab/TimeScaleScrollbar"))->getThumb ()->subscribeEvent(
             CEGUI::Window::EventMouseDoubleClick,
@@ -198,19 +199,19 @@ CEGUI::MouseButton convertOISMouseButtonToCegui (int buttonID) {
 }
 
 bool CaelumLabFrameListener::mouseMoved (const OIS::MouseEvent &arg) {
-    CEGUI::System::getSingleton ().injectMouseMove (arg.state.X.rel, arg.state.Y.rel);
+    CEGUI::System::getSingleton ().getDefaultGUIContext ().injectMouseMove (arg.state.X.rel, arg.state.Y.rel);
     return true;
 }
 
 bool CaelumLabFrameListener::mousePressed (const OIS::MouseEvent &arg, OIS::MouseButtonID id)
 {
-    CEGUI::System::getSingleton ().injectMouseButtonDown (convertOISMouseButtonToCegui (id));
+    CEGUI::System::getSingleton ().getDefaultGUIContext ().injectMouseButtonDown (convertOISMouseButtonToCegui (id));
     return true;
 }
 
 bool CaelumLabFrameListener::mouseReleased (const OIS::MouseEvent &arg, OIS::MouseButtonID id)
 {
-    CEGUI::System::getSingleton ().injectMouseButtonUp (convertOISMouseButtonToCegui (id));
+    CEGUI::System::getSingleton ().getDefaultGUIContext ().injectMouseButtonUp (convertOISMouseButtonToCegui (id));
     return true;
 }
 
@@ -219,14 +220,14 @@ bool CaelumLabFrameListener::keyPressed (const OIS::KeyEvent &arg)
     if (arg.key == OIS::KC_ESCAPE) {
         mShutdownRequested = true;
     }
-    CEGUI::System::getSingleton ().injectKeyDown (arg.key);
-    CEGUI::System::getSingleton ().injectChar (arg.text);
+    CEGUI::System::getSingleton ().getDefaultGUIContext ().injectKeyDown ((CEGUI::Key::Scan)arg.key);
+    CEGUI::System::getSingleton ().getDefaultGUIContext ().injectChar ((CEGUI::Key::Scan)arg.text);
     return true;
 }
 
 bool CaelumLabFrameListener::keyReleased (const OIS::KeyEvent &arg)
 {
-    CEGUI::System::getSingleton ().injectKeyUp (arg.key);
+    CEGUI::System::getSingleton ().getDefaultGUIContext ().injectKeyUp ((CEGUI::Key::Scan)arg.key);
     return true;
 }
 
@@ -238,7 +239,7 @@ bool CaelumLabFrameListener::handleMouseMove(const CEGUI::EventArgs& evt) {
         // Timing does not matter for RotX/RotY; only mouse motion.
         mRotX += Ogre::Degree(-me.moveDelta.d_x * 0.5);
         mRotY += Ogre::Degree(-me.moveDelta.d_y * 0.5);
-        CEGUI::MouseCursor::getSingleton ().setPosition (mLastMousePosition);
+        CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setPosition (mLastMousePosition);
     }
 
     return true;
@@ -248,12 +249,12 @@ bool CaelumLabFrameListener::handleMouseUp(const CEGUI::EventArgs& evt) {
     //const CEGUI::MouseEventArgs& me = static_cast<const CEGUI::MouseEventArgs&>(evt);
 
     if (!rightMouseDown()) {
-        CEGUI::MouseCursor::getSingleton ().show ();
+        CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().show ();
         if (mLastMousePositionSet) {
-            CEGUI::MouseCursor::getSingleton ().setPosition (mLastMousePosition);
+            CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setPosition (mLastMousePosition);
             mLastMousePositionSet = false;
         }
-        CEGUI::WindowManager::getSingleton ().getWindow("CaelumLab")->releaseInput ();
+        CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("CaelumLab")->releaseInput ();
     }
 
     return true;
@@ -263,12 +264,12 @@ bool CaelumLabFrameListener::handleMouseDown(const CEGUI::EventArgs& evt) {
     //const CEGUI::MouseEventArgs& me = static_cast<const CEGUI::MouseEventArgs&>(evt);
 
     if (rightMouseDown()) {
-        CEGUI::MouseCursor::getSingleton ().hide ();
+        CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().hide ();
         if (!mLastMousePositionSet) {
-            mLastMousePosition = CEGUI::MouseCursor::getSingleton ().getPosition ();
+            mLastMousePosition = CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().getPosition ();
             mLastMousePositionSet = true;
         }
-        CEGUI::WindowManager::getSingleton ().getWindow("CaelumLab")->captureInput ();
+        CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("CaelumLab")->captureInput ();
     }
 
     return true;
@@ -296,7 +297,7 @@ const String formatDegMinSec (Ogre::Degree angle) {
     int sec = (int)(aa * 3600);
     return sign +
             StringConverter::toString(sec / 3600, 2, '0') +  "\xB0" +
-            StringConverter::toString(sec / 60 % 60, 2, '0') + "`" + 
+            StringConverter::toString(sec / 60 % 60, 2, '0') + "`" +
             StringConverter::toString(sec % 60, 2, '0') + "``";
 }
 
@@ -378,7 +379,7 @@ void CaelumLabFrameListener::dumpRenderQueueShadows ()
                 " shadows " + StringConverter::toString(rqg->getShadowsEnabled()));
     }
     Ogre::LogManager::getSingletonPtr()->logMessage(
-            "World geometry render queue group " + 
+            "World geometry render queue group " +
             StringConverter::toString(mSceneMgr->getWorldGeometryRenderQueue()));
 }
 
@@ -387,9 +388,9 @@ void CaelumLabFrameListener::dumpMaterialNames ()
     MaterialManager::ResourceMapIterator it = Ogre::MaterialManager::getSingleton ().getResourceIterator ();
     while (it.hasMoreElements()) {
         Ogre::ResourcePtr res = it.getNext();
-        Ogre::MaterialPtr mat = static_cast<Ogre::MaterialPtr>(res);
-        Ogre::LogManager::getSingletonPtr()->logMessage(
-                "Material name " + mat->getName());
+        // Ogre::MaterialPtr mat = static_cast<Ogre::MaterialPtr>(res);
+        // Ogre::LogManager::getSingletonPtr()->logMessage(
+        //         "Material name " + mat->getName());
     }
 }
 
@@ -549,7 +550,7 @@ void CaelumLabFrameListener::updateWidgets ()
     LongReal jday = mCaelumSystem->getUniversalClock ()->getJulianDay ();
 
     // Time
-    { 
+    {
         // Bind julian day. The precission of ogre's string converter is not enough here.
         CEGUI::Editbox* julianDayEditbox = getWidget<CEGUI::Editbox> ("CaelumLab/JulianDayEditbox");
         if (julianDayEditbox->hasInputFocus ()) {
@@ -664,7 +665,7 @@ void CaelumLabFrameListener::updateWidgets ()
                     height2, 100, 15000);
             mCaelumSystem->getCloudSystem ()->getLayer (1)->setHeight (height2);
         }
-	}	
+	}
 
     // Starfield
     if (mCaelumSystem->getPointStarfield ())
@@ -758,13 +759,13 @@ void CaelumLabFrameListener::disableDepthComposer ()
 
 void CaelumLabFrameListener::initDepthComposerWidgets ()
 {
-    CEGUI::Checkbox* cbEnabled = getWidget<CEGUI::Checkbox> (
+    CEGUI::ToggleButton* cbEnabled = getWidget<CEGUI::ToggleButton> (
             "CaelumLab/DepthComposer/EnabledCheckbox");
-    CEGUI::Checkbox* cbDebug = getWidget<CEGUI::Checkbox> (
+    CEGUI::ToggleButton* cbDebug = getWidget<CEGUI::ToggleButton> (
             "CaelumLab/DepthComposer/DebugDepthRenderCheckbox");
-    CEGUI::Checkbox* cbSkyDomeHaze = getWidget<CEGUI::Checkbox> (
+    CEGUI::ToggleButton* cbSkyDomeHaze = getWidget<CEGUI::ToggleButton> (
             "CaelumLab/DepthComposer/SkyDomeHazeCheckbox");
-    CEGUI::Checkbox* cbExpGroundFog = getWidget<CEGUI::Checkbox> (
+    CEGUI::ToggleButton* cbExpGroundFog = getWidget<CEGUI::ToggleButton> (
             "CaelumLab/DepthComposer/GroundFogCheckbox");
 
     Caelum::DepthComposer* composer = mCaelumSystem->getDepthComposer();
@@ -776,13 +777,13 @@ void CaelumLabFrameListener::initDepthComposerWidgets ()
 
 void CaelumLabFrameListener::updateDepthComposerWidgets ()
 {
-    CEGUI::Checkbox* cbEnabled = getWidget<CEGUI::Checkbox> (
+    CEGUI::ToggleButton* cbEnabled = getWidget<CEGUI::ToggleButton> (
             "CaelumLab/DepthComposer/EnabledCheckbox");
-    CEGUI::Checkbox* cbDebug = getWidget<CEGUI::Checkbox> (
+    CEGUI::ToggleButton* cbDebug = getWidget<CEGUI::ToggleButton> (
             "CaelumLab/DepthComposer/DebugDepthRenderCheckbox");
-    CEGUI::Checkbox* cbSkyDomeHaze = getWidget<CEGUI::Checkbox> (
+    CEGUI::ToggleButton* cbSkyDomeHaze = getWidget<CEGUI::ToggleButton> (
             "CaelumLab/DepthComposer/SkyDomeHazeCheckbox");
-    CEGUI::Checkbox* cbExpGroundFog = getWidget<CEGUI::Checkbox> (
+    CEGUI::ToggleButton* cbExpGroundFog = getWidget<CEGUI::ToggleButton> (
             "CaelumLab/DepthComposer/GroundFogCheckbox");
 
     if (cbEnabled->isSelected () == true && mCaelumSystem->getDepthComposer () == 0) {
@@ -922,7 +923,7 @@ static void sizeComboList(CEGUI::Combobox* cb)
 
     // consider the possibility of an offset list position
     float droplist_offset =
-        dl->getYPosition().asAbsolute(cb->getPixelSize().d_height) - edit_size;
+        CEGUI::CoordConverter::asAbsolute(dl->getYPosition(), cb->getPixelSize().d_height) - edit_size;
 
     // set final size
     cb->setHeight( CEGUI::UDim( 0.0f,
@@ -1010,14 +1011,14 @@ void CaelumLabFrameListener::initMaterialSchemeUI ()
     materialSchemeCombo->getEditbox ()->setText ("Default");
     materialSchemeCombo->setItemSelectState (static_cast<size_t> (0), true);
 
-    CEGUI::Checkbox* forceTerrainShadowsCheckbox = getWidget<CEGUI::Checkbox> ("CaelumLab/ForceTerrainShadowsCheckbox");
+    CEGUI::ToggleButton* forceTerrainShadowsCheckbox = getWidget<CEGUI::ToggleButton> ("CaelumLab/ForceTerrainShadowsCheckbox");
     forceTerrainShadowsCheckbox->setSelected (this->getTerrainShadowsOn());
 }
 
 void CaelumLabFrameListener::updateMaterialSchemeUI ()
 {
     CEGUI::Combobox* materialSchemeCombo = getWidget<CEGUI::Combobox> ("CaelumLab/MaterialSchemeCombo");
-    CEGUI::Checkbox* forceTerrainShadowsCheckbox = getWidget<CEGUI::Checkbox> ("CaelumLab/ForceTerrainShadowsCheckbox");
+    CEGUI::ToggleButton* forceTerrainShadowsCheckbox = getWidget<CEGUI::ToggleButton> ("CaelumLab/ForceTerrainShadowsCheckbox");
 
     // Check for a material scheme change
     SampleMaterialScheme scheme = mMaterialScheme;
@@ -1134,7 +1135,8 @@ bool CaelumLabFrameListener::frameStarted (const FrameEvent& evt)
     if (mShutdownRequested || mWindow->isClosed()) {
         return false;
     }
-    mGuiSystem->injectTimePulse (evt.timeSinceLastFrame);
+    // mGuiSystem->injectTimePulse (evt.timeSinceLastFrame);
+    CEGUI::System::getSingleton ().getDefaultGUIContext ().injectTimePulse(evt.timeSinceLastFrame);
 
     mKeyboard->capture ();
     mMouse->capture ();
@@ -1274,7 +1276,7 @@ void CaelumLabApplication::createScene () {
         if (!model.mat.empty ()) {
             entity->setMaterialName (model.mat);
         }
- 
+
         // Place randomly on the terrain around the camera.
         Vector3 randPos(300 * Math::SymmetricRandom (), 0, 300 * Math::SymmetricRandom ());
         Vector3 pos = randPos + mCamera->getPosition ();
@@ -1313,4 +1315,3 @@ extern "C" int main(int argc, char **argv)
     // Error.
     return 1;
 }
-
